@@ -77,11 +77,18 @@ Further requirements:
 - Slave-side parent back reference: `Sensor : getSensor()`.
 - Master-side collector functions: `List<SensorReading>`, `List<Alert>`.
 
+Solved with standard best practices (annotations).
+
 ### 🔧 Task #3: Centralized service
 > ***First touch*** \
 > A little centralization practice: generalized persisting under specialized interfaces.
 
 Focusing on the `SensorReadingService`, implementing `SensorReadingService.saveSensorReading`.
+Constructed instance of `SensorReading` from the dto parameter, then persisted it.
+
+Also noticed that the signature of `SensorReadingRepository` contains a possible typo. To keep the type consistency, the extended type `JpaRepository<SensorReading, String>` should be changed to `Long` as it is the primary key.  
+
+Further notable points: concurrency, transactional, error handling.
 
 ### 🔧 Task #4: Sensor POST endpoint issues
 > ***First touch*** \

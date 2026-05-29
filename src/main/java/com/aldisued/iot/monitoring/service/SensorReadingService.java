@@ -12,15 +12,17 @@ public class SensorReadingService {
   private final SensorReadingRepository sensorReadingRepository;
   private final SensorRepository sensorRepository;
 
-  public SensorReadingService(SensorReadingRepository sensorReadingRepository,
-      SensorRepository sensorRepository) {
+  public SensorReadingService(SensorReadingRepository sensorReadingRepository, SensorRepository sensorRepository) {
     this.sensorReadingRepository = sensorReadingRepository;
     this.sensorRepository = sensorRepository;
   }
 
   public SensorReading saveSensorReading(SensorReadingDto sensorReadingDto) {
-    //TODO: Task 3
-    return null;
+     return this.sensorReadingRepository
+                .saveAndFlush(new SensorReading(
+                    sensorReadingDto.value(),
+                    sensorReadingDto.timestamp(),
+                    this.sensorRepository.getReferenceById(sensorReadingDto.sensorId())
+                ));
   }
-
 }
