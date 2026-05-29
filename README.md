@@ -117,6 +117,11 @@ Further requirements:
 - Mandatory query parameter: `sensorId`
 - 404 Not Found on an empty result
 
+The solution has three elements:
+- `AlertController`: The entrypoint calling the service layer.
+- `AlertService`: The service using the repository layer to composose the desired functionality.
+- `AlertRepository`: The repository layer, to define feautre specific method with wired ordering.
+
 ### 🔧 Task #7: Adding MeasureMentService functions
 > ***First touch*** \
 > If its place is given, only the function's body is missing.
