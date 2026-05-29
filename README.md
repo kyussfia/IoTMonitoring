@@ -49,7 +49,7 @@ javac -d out $(find . -name "*.java")
 
 ---
 
-## 🧠 Solution Path
+## 🧠 Thought Process
 
 ### 🔧 Task #0: Use Testcontainers
 - Installed and configured docker for Windows. 
@@ -62,32 +62,33 @@ javac -d out $(find . -name "*.java")
 
 ---
 ### 🔧 Task #1: `Sensor.type` persistent type migration
-> #### First read
-> Can't yet decide whether it's a migration problem or some remapping around serialization or normalization.
+> ***First touch*** \
+> Can't yet decide whether it's an app lifecycle - migration problem or some remapping somewhere on the serialization-normalization-persistence line.
+
+After checking of the source files, it seems like the `Sensor` entity is well composed, including the type of field `type`. Clean enum. And that's why I also try to keep it that way, so as the solution I choose the spring supported `@Enumerated` annotation with its type parameter. (Declared as String) 
 
 ### 🔧 Task #2: Sensor workflow components' relations
-> #### First read
+> ***First touch*** \
 > It seems like two independent oneToMany relation declarations in EntityFirst approach, consider use of annotations.
 
 Further requirements:
 - Extend base entities: `Sensor`, `SensorReading`, `Alert`.
 - Slave-side foreign key constraint: `sensor_id`.
-- Slave-side parent back reference: `Sensor : getSensor()`
-- Master-side collector functions: List<SensorReading>, List<Alert>.
-- ???? Getter and setter method stubs are already prepared for the new properties and must be fully implemented.
+- Slave-side parent back reference: `Sensor : getSensor()`.
+- Master-side collector functions: `List<SensorReading>`, `List<Alert>`.
 
 ### 🔧 Task #3: Centralized service
-> #### First read
+> ***First touch*** \
 > A little centralization practice: generalized persisting under specialized interfaces.
 
 Focusing on the `SensorReadingService`, implementing `SensorReadingService.saveSensorReading`.
 
 ### 🔧 Task #4: Sensor POST endpoint issues
-> #### First read
+> ***First touch*** \
 > Seems like some error handling: the first one seems closer for validations, the second is differing on origin: that one indicates some database driver error handling storyline.
 
 ### 🔧 Task #5: Alert endpoint extensions
-> #### First read
+> ***First touch*** \
 > New controller-action implementation.
 
 Example: `http://localhost:8080/alerts/latest?sensorId=777d727e-6650-415f-85eb-9c9ca05f65c1`
@@ -98,7 +99,7 @@ Further requirements:
 - 404 Not Found on an empty result
 
 ### 🔧 Task #7: Adding MeasureMentService functions
-> #### First read
+> ***First touch*** \
 > If its place is given, only the function's body is missing.
 
 Implement `SensorReading : MeasurementService.getAverageTemperature` as the method, which must return the average temperature reading over a specified time period.
@@ -108,14 +109,14 @@ Implement `SensorReading : MeasurementService.getAverageTemperature` as the meth
 ---
 ## Optionals
 ### 🔧 Task #6: AlertService & Kafka integration
-> #### First read
+> ***First touch*** \
 > Is there any way to generally centralize any entities?...
 
 Centralized entity service again, now it is on `Alert`.
 Triggering Kafka messages, consider using premade tools.
 
 ### 🔧 Task #8: Extend Measurement API
-> #### First read
+> ***First touch*** \
 > New controller-action implementation.
 
 Implement `List<Measurement> : MeasurementService.getMeasurementValuesBySensorType` with order on `timestamp`.
@@ -124,13 +125,13 @@ QA:
 - So what should be the returning type? Only a list of numbers hiding the order and the object heritage or can keep the object perspective?
 
 ### 🔧 Task #9: TODO1
-> #### First read
+> ***First touch*** \
 > New controller-action implementation.
 
 TODO
 
 ### 🔧 Task #10: TODO2
-> #### First read
+> ***First touch*** \
 > New controller-action implementation.
 
 TODO

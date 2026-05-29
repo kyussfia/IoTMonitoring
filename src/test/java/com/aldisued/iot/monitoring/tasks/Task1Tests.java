@@ -21,8 +21,7 @@ public class Task1Tests extends IntegrationTestBase {
 
   @Test
   public void verifySensorType() {
-    Sensor sensor = sensorRepository.findById(ID)
-        .orElseThrow();
+    Sensor sensor = this.sensorRepository.findById(ID).orElseThrow();
     Assertions.assertEquals(SensorType.TEMPERATURE, sensor.getType());
   }
 }
