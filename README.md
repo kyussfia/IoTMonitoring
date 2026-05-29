@@ -122,13 +122,18 @@ The solution has three elements:
 - `AlertService`: The service using the repository layer to composose the desired functionality.
 - `AlertRepository`: The repository layer, to define feautre specific method with wired ordering.
 
-### 🔧 Task #7: Adding MeasureMentService functions
+### 🔧 Task #7: Adding MeasurementService functions
 > ***First touch*** \
 > If its place is given, only the function's body is missing.
 
 Implement `SensorReading : MeasurementService.getAverageTemperature` as the method, which must return the average temperature reading over a specified time period.
 - The parameter period is passed as a parameter or as a configuration property?
 - Is there any need for some type validation?
+
+After checking the implementation, the first opened questions could be closed.
+The problem is solved with standard cook-book practices:
+- Feature-specific querying in the repository layer.
+- Straight forward and minimal service layer implementation.
 
 ---
 ## Optionals
