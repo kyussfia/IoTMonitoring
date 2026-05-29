@@ -156,6 +156,16 @@ QA:
 - Order direction is not specified.
 - So what should be the returning type? Only a list of numbers hiding the order and the object heritage or can keep the object perspective?
 
+After checking the available environment, my conclusions came:
+- Order direction is still not specified.
+- Return type already declared.
+
+The solution is made as calling the feature-specific repository method in the service and defining that query for that aforementioned repository method.
+
+Notes: Connecting to the error-handling topic, further adjustments are possible.
+
+Further notable points: consistent persistence response handling in the same layer.
+
 ### 🔧 Task #9: TODO1
 > ***First touch*** \
 > New controller-action implementation.
