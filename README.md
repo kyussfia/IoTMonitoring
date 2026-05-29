@@ -94,6 +94,18 @@ Further notable points: concurrency, transactional, error handling.
 > ***First touch*** \
 > Seems like some error handling: the first one seems closer for validations, the second is differing on origin: that one indicates some database driver error handling storyline.
 
+As the task requires fixes in the implementation, I pointed out four subtasks:
+1. I added validation constraints in the subject entity `SensorDto`.
+2. Implement a basic uniqueness check upon save.
+3. Enabling validation on the controller-action via annotation.
+4. Drop the uniqueness down to the jpa level.
+
+Further notable points: concurrency, transactional, error handling.
+
+Hanging points:
+- I think the error-handling is starting to get into a point where it is getting to be beneficial if it would be separated to gain more control over that. I precisely mean the goal to not let interface related exceptions on the service layer, generalize the exception instead there. And left the specific `ResponseStatusException`s usages only in the controller layer.
+- The "good enough" unique constraint dilemma (extended table annotation?)
+
 ### 🔧 Task #5: Alert endpoint extensions
 > ***First touch*** \
 > New controller-action implementation.
