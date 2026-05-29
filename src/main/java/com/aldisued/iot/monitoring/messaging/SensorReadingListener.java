@@ -15,7 +15,7 @@ public class SensorReadingListener {
 
   @KafkaListener(topics = {"sensor-reading"}, groupId = "iot-monitoring")
   public void listen(SensorReadingDto sensorReadingDto) {
-    sensorReadingService.saveSensorReading(sensorReadingDto);
+    this.sensorReadingService.saveSensorReading(sensorReadingDto);
   }
 
 }

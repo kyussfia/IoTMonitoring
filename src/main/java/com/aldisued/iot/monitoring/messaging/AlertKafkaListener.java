@@ -15,7 +15,7 @@ public class AlertKafkaListener {
 
   @KafkaListener(topics = {"sensor-alerts"}, groupId = "iot-monitoring")
   public void listen(AlertDto alertDto) {
-    alertService.saveAlert(alertDto);
+    this.alertService.saveAlert(alertDto);
   }
 
 }

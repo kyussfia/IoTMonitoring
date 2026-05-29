@@ -20,6 +20,6 @@ public class SensorReadingController {
 
   @PostMapping
   public SensorReading saveSensorReading(@RequestBody SensorReadingDto sensorReadingDto) {
-    return sensorReadingService.saveSensorReading(sensorReadingDto);
+    return this.sensorReadingService.saveSensorReading(sensorReadingDto);
   }
 }
