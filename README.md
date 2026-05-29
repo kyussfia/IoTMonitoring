@@ -105,6 +105,7 @@ Further notable points: concurrency, transactional, error handling.
 Hanging points:
 - I think the error-handling is starting to get into a point where it is getting to be beneficial if it would be separated to gain more control over that. I precisely mean the goal to not let interface related exceptions on the service layer, generalize the exception instead there. And left the specific `ResponseStatusException`s usages only in the controller layer.
 - The "good enough" unique constraint dilemma (extended table annotation?)
+- The "good enough" saving method (save or saveAndFlush) 
 
 ### 🔧 Task #5: Alert endpoint extensions
 > ***First touch*** \
@@ -142,7 +143,9 @@ The problem is solved with standard cook-book practices:
 > Is there any way to generally centralize any entities?...
 
 Centralized entity service again, now it is on `Alert`.
-Triggering Kafka messages, consider using premade tools.
+Triggering a Kafka message, consider using premade tools.
+
+I implemented the usual repository interaction with additional Kafka message publishing on the `alerts` topic using the dto as payload.
 
 ### 🔧 Task #8: Extend Measurement API
 > ***First touch*** \
