@@ -170,7 +170,8 @@ Further notable points: consistent persistence response handling in the same lay
 > ***First touch*** \
 > New controller-action implementation.
 
-TODO
+TODO:
+
 
 ### 🔧 Task #10: TODO2
 > ***First touch*** \

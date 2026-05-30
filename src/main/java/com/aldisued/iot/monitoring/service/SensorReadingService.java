@@ -22,7 +22,7 @@ public class SensorReadingService {
                 .saveAndFlush(new SensorReading(
                     sensorReadingDto.value(),
                     sensorReadingDto.timestamp(),
-                    this.sensorRepository.getReferenceById(sensorReadingDto.sensorId())
+                    this.sensorRepository.findById(sensorReadingDto.sensorId()).orElseThrow()
                 ));
   }
 }

@@ -4,10 +4,9 @@ import com.aldisued.iot.monitoring.dto.AlertDto;
 import com.aldisued.iot.monitoring.entity.Alert;
 import com.aldisued.iot.monitoring.repository.AlertRepository;
 import com.aldisued.iot.monitoring.repository.SensorRepository;
-import org.springframework.http.HttpStatus;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -29,7 +28,7 @@ public class AlertService {
                       .saveAndFlush(new Alert(
                           alertDto.message(),
                           alertDto.timestamp(),
-                          this.sensorRepository.getReferenceById(alertDto.sensorId())
+                          this.sensorRepository.findById(alertDto.sensorId()).orElseThrow()
                       ));
 
     this.kafkaTemplate.send("alerts", alertDto);
@@ -41,6 +40,6 @@ public class AlertService {
     return this.alertRepository
                .findFirstBySensor_IdOrderByTimestampDesc(sensorId)
                .map(alert -> new AlertDto(alert.getSensor().getId(), alert.getMessage(), alert.getTimestamp()))
-               .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alert not found"));
+               .orElseThrow(() -> new EntityNotFoundException("Alert not found"));
   }
 }
