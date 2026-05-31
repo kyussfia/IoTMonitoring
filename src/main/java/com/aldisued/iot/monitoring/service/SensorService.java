@@ -17,9 +17,6 @@ public class SensorService {
   }
 
   public Sensor saveSensor(SensorDto sensor) {
-    if (this.sensorRepository.existsByName(sensor.name())) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Sensor name already exists");
-    }
     return this.sensorRepository.save(new Sensor(sensor.name(), sensor.type()));
   }
 }

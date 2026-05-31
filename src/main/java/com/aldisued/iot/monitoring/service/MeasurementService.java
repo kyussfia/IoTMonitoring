@@ -21,9 +21,6 @@ public class MeasurementService {
   }
 
   public Optional<Double> getAverageTemperature(LocalDateTime from, LocalDateTime to) {
-    return Optional.ofNullable(
-        this.sensorReadingRepository.findAverageValueBySensorTypeAndTimestampBetween(SensorType.TEMPERATURE, from, to)
-    );
+    return Optional.ofNullable(this.sensorReadingRepository.findAverageValueBySensorTypeAndTimestampBetween(SensorType.TEMPERATURE, from, to));
   }
-
 }

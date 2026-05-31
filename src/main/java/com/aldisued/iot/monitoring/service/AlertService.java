@@ -2,9 +2,9 @@ package com.aldisued.iot.monitoring.service;
 
 import com.aldisued.iot.monitoring.dto.AlertDto;
 import com.aldisued.iot.monitoring.entity.Alert;
+import com.aldisued.iot.monitoring.exception.ResourceNotFoundException;
 import com.aldisued.iot.monitoring.repository.AlertRepository;
 import com.aldisued.iot.monitoring.repository.SensorRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +42,6 @@ public class AlertService {
     return this.alertRepository
                .findFirstBySensor_IdOrderByTimestampDesc(sensorId)
                .map(alert -> new AlertDto(alert.getSensor().getId(), alert.getMessage(), alert.getTimestamp()))
-               .orElseThrow(() -> new EntityNotFoundException("Alert not found"));
+               .orElseThrow(() -> new ResourceNotFoundException("Alert not found"));
   }
 }
