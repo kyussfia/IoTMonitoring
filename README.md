@@ -166,95 +166,163 @@ Where possible, I preferred standard Spring Boot and JPA patterns over custom in
 - Successfully ran PoC test (`Task0Test`) to verify.
 
 ---
-### 🔧 Task #1: `Sensor.type` persistent type migration
-> ***First touch*** \
+### 📌 Task #1: `Sensor.type` persistent type migration
+
+```
+📝 1.Task:
+The Sensor entity has a type property, which is defined as an ENUM.
+In the current implementation, this property is stored as an integer in the database.
+
+Your task:
+Modify the implementation so that the type property is stored as a string (e.g., "TEMPERATURE", "HUMIDITY", "PRESSURE"),
+instead of an integer.
+```
+
+> ***💬 First touch*** \
 > Can't yet decide whether it's an app lifecycle - migration problem or some remapping somewhere on the serialization-normalization-persistence line.
 
-After checking of the source files, it seems like the `Sensor` entity is well composed, including the type of field `type`. Clean enum. And that's why I also try to keep it that way, so as the solution I choose the spring supported `@Enumerated` annotation with its type parameter. (Declared as String) 
+After further investigation it seems like the `Sensor` entity is well composed, including the clean enum type of field `type`.
+And that's why I also try to keep it that way, so as the solution I choose the spring supported `@Enumerated` annotation with its type parameter (declared as String). 
 
-### 🔧 Task #2: Sensor workflow components' relations
-> ***First touch*** \
+### 📌 Task #2: Sensor workflow components' relations
+```
+📝 2.Task:
+The application contains three entities: Sensor, SensorReading, and Alert.
+A Sensor can have multiple SensorReadings and multiple Alerts.
+However, the relationships between these entities are not yet implemented.
+
+Your task:
+Modify the Sensor, SensorReading, and Alert entities to establish the necessary relationships.
+SensorReading, and Alert must have a foreign key column referencing the Sensor entity named sensor_id.
+The Sensor entity must have: 1. A list of SensorReadings 2. A list of Alerts.
+The SensorReading and Alert entities must each have a reference to the Sensor they belong to.
+Getter and setter method stubs are already prepared for the new properties and must be fully implemented.
+```
+> ***💬 First touch*** \
 > It seems like two independent oneToMany relation declarations in EntityFirst approach, consider use of annotations.
+> 
+> Further requirements:
+> - Extend base entities: `Sensor`, `SensorReading`, `Alert`.
+> - Slave-side foreign key constraint: `sensor_id`.
+> - Slave-side parent back reference: `Sensor : getSensor()`.
+> - Master-side collector functions: `List<SensorReading>`, `List<Alert>`.
 
-Further requirements:
-- Extend base entities: `Sensor`, `SensorReading`, `Alert`.
-- Slave-side foreign key constraint: `sensor_id`.
-- Slave-side parent back reference: `Sensor : getSensor()`.
-- Master-side collector functions: `List<SensorReading>`, `List<Alert>`.
+Solved with standard best practices (annotations, mainly on entities).
 
-Solved with standard best practices (annotations).
+### 📌 Task #3: Centralized service
+```
+📝 3.Task:
+SensorReadings can arrive either via an HTTP POST request (handled by SensorReadingController) or via a Kafka message (handled by SensorReadingListener).
+In both cases, the SensorReading must be saved to the database using the SensorReadingService.
 
-### 🔧 Task #3: Centralized service
-> ***First touch*** \
+Your task:
+Implement the 'SensorReadingService.saveSensorReading' method to persist the SensorReading in the database.
+```
+> ***💬 First touch*** \
 > A little centralization practice: generalized persisting under specialized interfaces.
 
-Focusing on the `SensorReadingService`, implementing `SensorReadingService.saveSensorReading`.
-Constructed instance of `SensorReading` from the dto parameter, then persisted it.
+Focusing on the `SensorReadingService`, implementing `SensorReadingService.saveSensorReading`:
+Construct instance of `SensorReading` from the dto parameter, then persist it.
+Verified behavior both in concurrent and transactional situations.
+Errors are handled transparently, with the default built-in behavior.
 
-Also noticed that the signature of `SensorReadingRepository` contains a possible typo. To keep the type consistency, the extended type `JpaRepository<SensorReading, String>` should be changed to `Long` as it is the primary key.  
+❗Note:❗Also noticed that the signature of `SensorReadingRepository` contains a possible typo. 
+To keep the type consistency, the extended type `JpaRepository<SensorReading, String>` should be changed to `Long` as it is the type of the primary key.
 
-Further notable points: concurrency, transactional, error handling.
+### 📌 Task #4: Sensor POST endpoint issues
+```
+📝 4.Task:
+The Sensor entities can be created via an HTTP POST request to the /sensors endpoint.
+There are some issues with the current implementation:
+- If no sensor name provided in the request, the application must return a 400 Bad Request instead of a 500 Internal Server Error.
+- The sensor name must be unique. If a sensor with the same name already exists, the application should return a 409 Conflict status.
 
-### 🔧 Task #4: Sensor POST endpoint issues
-> ***First touch*** \
+Your task: 
+Fix the implementation.
+```
+> ***💬 First touch*** \
 > Seems like some error handling: the first one seems closer for validations, the second is differing on origin: that one indicates some database driver error handling storyline.
 
-As the task requires fixes in the implementation, I pointed out four subtasks:
+I broke down the problem into the following parts:
 1. I added validation constraints in the subject entity `SensorDto`.
 2. Implement a basic uniqueness check upon save.
 3. Enabling validation on the controller-action via annotation.
-4. Drop the uniqueness down to the jpa level.
+4. Drop the uniqueness down to the jpa level (entity)
 
-Further notable points: concurrency, transactional, error handling.
+Also, the solution has the verified behavior both in concurrent and transactional situations.
 
-Hanging points:
-- I think the error-handling is starting to get into a point where it is getting to be beneficial if it would be separated to gain more control over that. I precisely mean the goal to not let interface related exceptions on the service layer, generalize the exception instead there. And left the specific `ResponseStatusException`s usages only in the controller layer.
-- The "good enough" unique constraint dilemma (extended table annotation?)
-- The "good enough" saving method (save or saveAndFlush) 
+As it is required, to customize HTTP status codes introduce an `ExceptionHandler`. It should provide the required HTTP status codes.
+Validator violations return with 400 by default, database constraint errors are configured to return with 409 as expected.
 
-### 🔧 Task #5: Alert endpoint extensions
-> ***First touch*** \
+### 📌 Task #5: Alert endpoint extensions
+```
+📝 5.Task:
+The application stores alerts related to sensors in the Alert entity.
+
+Your task:
+Implement a REST endpoint in the AlertController to retrieve the most recent alert for a given sensor.
+The endpoint URL should be /alerts/latest. The device ID must be provided as a query parameter (mandatory).
+If there is no alert for the given sensor, the endpoint must return a 404 Not Found status.
+```
+> ***💬 First touch*** \
 > New controller-action implementation.
+> Example: `http://localhost:8080/alerts/latest?sensorId=777d727e-6650-415f-85eb-9c9ca05f65c1`
+> 
+> Further requirements:
+> - Introduce `AlertController#getRecentAlertsBySensorId`
+> - URL: `/alerts/latest`
+> - Mandatory query parameter: `sensorId`
+> - 404 Not Found on an empty result
 
-Example: `http://localhost:8080/alerts/latest?sensorId=777d727e-6650-415f-85eb-9c9ca05f65c1`
-Further requirements:
-- Introduce `AlertController#getRecentAlertsBySensorId`
-- URL: `/alerts/latest`
-- Mandatory query parameter: `sensorId`
-- 404 Not Found on an empty result
+With the use of `@RequestParam` annotation on the sensor id parameter, it is guaranteed that the parameter is present and not empty.
 
-The solution has three elements:
+The solution has three elements on the entity-specific line:
 - `AlertController`: The entrypoint calling the service layer.
 - `AlertService`: The service using the repository layer to composose the desired functionality.
-- `AlertRepository`: The repository layer, to define feautre specific method with wired ordering.
+- `AlertRepository`: The repository layer, to define feature-specific method with wired ordering.
 
-### 🔧 Task #7: Adding MeasurementService functions
-> ***First touch*** \
-> If its place is given, only the function's body is missing.
+In this solution, I also introduced `ResourceNotFoundException` as a custom exception type to be thrown when it is expected to respond with a 404 Not Found.
 
-Implement `SensorReading : MeasurementService.getAverageTemperature` as the method, which must return the average temperature reading over a specified time period.
-- The parameter period is passed as a parameter or as a configuration property?
-- Is there any need for some type validation?
+❗Note:❗Also noticed that the signature of `AlertRepository` contains a possible typo.
+To keep the type consistency, the extended type `JpaRepository<Alert, String>` should be changed to `Long` as it is the type of the primary key.
 
-After checking the implementation, the first opened questions could be closed.
+### 📌 Task #7: Adding MeasurementService functions
+```
+📝 7.Task:
+The application can store multiple types of sensor readings, such as temperature, humidity, and pressure.
+
+Your task:
+Implement the MeasurementService.getAverageTemperature method.
+The method must return the average temperature reading over a specified time period.
+```
+> ***💬 First touch*** \
+> Implement `SensorReading : MeasurementService.getAverageTemperature` as the method, which must return the average temperature reading over a specified time period.
+> - The parameter period is passed as a parameter or as a configuration property?
+> - Is there any need for some type validation?
+
+After checking the implementation, the opened questions could be closed.
 The problem is solved with standard cook-book practices:
 - Feature-specific querying in the repository layer.
 - Straight forward and minimal service layer implementation.
 
 ---
 ## Optionals
-### 🔧 Task #6: AlertService & Kafka integration
-> ***First touch*** \
-> Is there any way to generally centralize any entities?...
+### 📌 Task #6: AlertService & Kafka integration
+```
+📝 6.Task:
+Similar to SensorReadings, Alerts can also arrive via an HTTP POST request or a Kafka message.
 
-Centralized entity service again, now it is on `Alert`.
-Triggering a Kafka message, consider using premade tools.
+Your tasks:
+- Implement the AlertService.saveAlert method to persist the Alert in the database.
+- Publish a Kafka message with the AlertDto object as the payload to the alerts topic.
+You can assume that Kafka is already configured in the application. So you can use the 
+KafkaTemplate<String, AlertDto> for publishing messages.
+```
+> ***💬 First touch*** \
+> Is there any available way for general centralization of any entities?...
+> Centralizing entity service again, now it is on `Alert` extended with triggering a Kafka message, consider using premade tools.
 
-I implemented the usual repository interaction with additional Kafka message publishing on the `alerts` topic using the dto as payload.
-
-### 🔧 Task #8: Extend Measurement API
-> ***First touch*** \
-> New controller-action implementation.
+I implemented the expected repository interaction with additional Kafka message publishing on the `alerts` topic using the dto as payload.
 
 ### 📌 Task #8: Extend Measurement API
 ```
