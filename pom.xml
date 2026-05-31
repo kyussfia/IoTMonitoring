@@ -11,7 +11,7 @@
 
 	<groupId>com.kyussfia</groupId>
 	<artifactId>iot-monitoring</artifactId>
-	<version>0.2.0</version>
+	<version>0.2.1</version>
 	<name>iot-monitoring</name>
 	<description>A basic 'Internet of Things' device monitoring system written in java using Spring Boot.</description>
 

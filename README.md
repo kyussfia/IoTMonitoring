@@ -256,35 +256,132 @@ I implemented the usual repository interaction with additional Kafka message pub
 > ***First touch*** \
 > New controller-action implementation.
 
-Implement `List<Measurement> : MeasurementService.getMeasurementValuesBySensorType` with order on `timestamp`.
-QA:
-- Order direction is not specified.
-- So what should be the returning type? Only a list of numbers hiding the order and the object heritage or can keep the object perspective?
+### 📌 Task #8: Extend Measurement API
+```
+📝 8.Task:
+To enable further processing, the application must be able to retrieve all measurement values for a specific sensor type.
 
-After checking the available environment, my conclusions came:
-- Order direction is still not specified.
-- Return type already declared.
-
-The solution is made as calling the feature-specific repository method in the service and defining that query for that aforementioned repository method.
-
-Notes: Connecting to the error-handling topic, further adjustments are possible.
-
-Further notable points: consistent persistence response handling in the same layer.
-
-### 🔧 Task #9: TODO1
-> ***First touch*** \
+Your task:
+Implement the MeasurementService.getMeasurementValuesBySensorType method.
+The method must return a list of measurement values for a given sensor type, ordered by their timestamp.
+```
+> ***💬 First touch*** \
 > New controller-action implementation.
+> Implement `List<Measurement> : MeasurementService.getMeasurementValuesBySensorType` with order on `timestamp`.
+> - Order direction is not specified.
+> - So what should be the returning type? Only a list of numbers hiding the order and the object heritage or can keep the object perspective?
 
-TODO:
+After checking the available environment, the solution should be made by calling a feature-specific repository method in the service.
 
+---
 
-### 🔧 Task #10: TODO2
-> ***First touch*** \
-> New controller-action implementation.
+## Selectable tasks
+For a review situation <ins>I would pick the Tasks #9</ins> over the #10.
+The reason is that I prefer to advance sequentially, and the #10 is a bit more opened in some aspects, which leads to more questions.
 
-TODO
+Maybe Task #9 is more focused on the current task.
+But for the sake of completeness, I'll solve it anyway.
+Firstly, because it is a good practice to discuss on the uncharted corners of the situation.
 
-## 🔧 Interesting Generalisations
+### 📌 Task #9: Deviation filtering
+```
+📝 9.Task:
+Sensor data is often noisy and may contain outliers. To improve the accuracy of reports, a new calculation is being introduced.
+
+Your task:
+Implement the MeasurementCalculatorService.filterByAverageDeviation method.
+The method input is a list of Double values representing sensor measurement.
+The method must filter out values that deviate too much from the average.
+The acceptable deviation is provided as a parameter (a double between 0.0 and 1.0), 
+representing the allowed percentage of deviation from the average.
+The method must validate the deviation parameter as,
+if the parameter is outside the range [0.0, 1.0], the method should throw an IllegalArgumentException.
+```
+> ***💬 First touch*** \
+> Implementation of a custom calculation method: Input parameters (samples and deviation) are declared as well as the integration requirements (filtering).
+> I can immediately see two loops:
+> 1. To determine the average value 
+> 2. For the actual filtering.
+> 
+> I also expect to delegate the validations behind a type.
+> Consider delegating the relevant mathematical abstractions behind that type too.
+> Considering further optimizations.
+
+After analyzing the description of deviation, I would like to formulate a more structured definition. 
+Deviation can be interpreted as a structure associated with a target value and its surrounding neighborhood (both positive and negative).
+
+I imagine one possible deviation as a pair of a target central value and a target radius, whose definition is based on the target value and the deviation coefficient.
+The extent of this neighborhood is determined by the deviation coefficient, since the deviation tolerance is calculated relative to the target value as the center point.
+Defining a clean `contains` method for the `Deviation` type is looking straightforward in terms of usage at the calling side of the solution.
+On the other hand, initially taking care of inclusive- / exclusive-edge cases also seems handy.
+
+One point that I disagree with is a hidden side effect, which is only discovered when I ran the concept test.
+Namely, the case when the sampleset is empty. 
+The provided test expects an empty list result on valid deviation parameter, but on an empty sampleset.
+In my interpretation, it is an undefined behavior. 
+Without samples, there is no average value. So the center of the deviation cannot be declared, the `Deviation` type can't tolerate that.
+
+So I try to delegate the context specifics where they have been introduced:
+The allowance of empty sets is derived from the filtering (service) approach.
+The provided test cases expect deviation parameter validation independently of the cases related to empty samplesets.
+
+When I switched their order, the test cases failed. (Which should be ok, because those are independent validation rules, none of each should be prioritized over the other.)
+
+For example, in case of invalid deviation parameter and empty sampleset, the tests are expecting the deviation parameter violation, over the empty sampleset violation.
+
+As a solution, I implemented the `Deviation` type and the `MeasurementService.filterByAverageDeviation` method reducing the complexity to a simple filtering operation on the supplied intput.
+Both of the validations were implemented: the deviation type holds the validity of the deviation parameter, the filter method in the service handles the empty sampleset case.
+
+### 📌 Task #10: Sliding window reduction
+```
+📝 10.Task:
+Sensor data is often noisy and may contain outliers. To improve the accuracy of reports, a new calculation is being introduced.
+
+Your task:
+Implement the MeasurementCalculatorService.getMovingAverage method. The method input is a list of Double values representing sensor measurements.
+windowSize is the size of the moving average window and must be a positive integer.
+The method must validate the windowSize parameter: 
+- if windowSize <= 0, throw an IllegalArgumentException, 
+- windowSize is greater than the number of values throw an IllegalArgumentException.
+The method should return a list of Double values,
+where each element represents the moving average for a window of size windowSize.
+```
+> ***💬 First touch*** \
+> Same use-case context as the previous task.
+> Implementation of another custom calculation method over input samples. Customized iteration, which is basically compressing a window of samples into a new sample.
+> Handle some restrictions over the window definition, so validation is also required. However, the definition felt a bit incomplete, so during the analysis I rely on the natural/intuitive interpretation.  
+> 
+> I imagine this, more of a sliding window concept over the data series. Which basically generates new compressed samples as the slider advances over the data series.
+> Every element should be participated in the calculation. This hints a possible O(sample length) complexity.
+>  
+> Consider use of a mirrored solution, with delegating window requirements to a custom type.
+> Consider further optimizations or alternatives with the help of premade tools/concepts. (reducer, collector, queue, etc.)
+
+The initial validations are trivial, so the only question is where to allocate them.
+The brute-force approach would do exactly what the description says: calculating the averages moving the slider from the beginning to the end.
+That would cost O(window size * samples length). But with exploiting that the size of the windows can't exceed the size of the data series, it is ensured that the slider loop can be merged into the calculator loop.
+
+The expectation on the result is something like:
+```
+avg(data[0], data[1], data[2])
+avg(data[1], data[2], data[3])
+avg(data[2], data[3], data[4])
+```
+Notice that the overlapping summaries can be defined recursively:
+```
+sum(0..2) = data[0] + data[1] + data[2]
+sum(1..3) = previousSum - data[0] + data[3]
+sum(2..4) = previousSum - data[1] + data[4]
+```
+We exchanged two addition operations to a subtraction and an addition. Which means zero impact on the cost.
+Gaining the O(samples length) advantage of the sliding window approach while binding the summing to the "merged" loop and losing the ability to detach the window property of the logic.
+Therefore, the (window-ness) related validations can be also placed here.
+Two more optimization points I can see are:
+1. To inverse the division to multiplication and leave out of the loop
+2. To predetermine result container size.
+
+With this native-close implementation, I'm also sacrificing alternatives at the Altar of Optimization, because none of the aforementioned tools would provide further performance improvements.
+
 ---
 
 ## 🔧 Possible Future Improvements
