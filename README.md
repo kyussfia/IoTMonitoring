@@ -1,4 +1,4 @@
-# Monitoring
+# IoT Monitoring
 ## Introduction
 This repository contains a solution for a coding assignment given during an **ALDI** job interview in 2026.  
 The task was to pull up the environment for the received, incomplete project prototype to finish it while ensuring its errorless, smooth execution.
@@ -27,35 +27,140 @@ Please complete the assignment **within one week**.
 ## 🚀 Setup & Running
 
 ### Prerequisites
-- Java 17 or later
-- JUnit 5 (the test suite uses `org.junit.jupiter.api`)
 
-### Build & Test
-No external build tool is required – the code compiles with plain `javac`.  
-To compile and run the tests manually:
+Before running the application or the integration tests, make sure the following tools are available:
 
+- Java 26
+- Docker Desktop or Docker Engine
+- Git
+- Maven
+- An IDE such as IntelliJ IDEA is recommended
+
+> The integration tests rely on PostgreSQL through Testcontainers, so Docker must be running before executing the test suite.
+
+---
+
+### Clone the Repository
 ```bash
-# Compile all .java files (assuming standard directory layout)
-javac -d out $(find . -name "*.java")
-
-# Run the test class (JUnit Platform Console Launcher needed for standalone execution)
-# Alternatively, use your IDE or a build tool (Maven/Gradle) with JUnit 5.
-```
-
-### Example Usage
-
-```java
+bash git clone <repository-url> cd monitoring
 ```
 
 ---
 
+### Running the Tests
+
+The project contains task-oriented integration tests that validate the assignment requirements.
+
+Maven:
+```bash
+bash ./mvnw test
+```
+On Windows:
+```bash
+bash mvnw.cmd test
+```
+
+You can also run individual task tests from the IDE, for example:
+
+Maven:
+```bash
+bash ./mvnw -Dtest=Task4Tests test
+```
+
+---
+
+### Database Setup
+
+The preferred setup is using **Testcontainers**, which automatically starts a PostgreSQL container for the integration tests.
+
+No manual database setup is required if Docker is available and running.
+
+Alternatively, a local PostgreSQL database can be used. In that case, create the database and user as described in [`TASKS.md`](./TASKS.md), then activate the local Spring profile according to the assignment instructions.
+
+---
+
+### Running the Application
+
+Maven:
+```bash
+bash ./mvnw spring-boot:run
+```
+The application should start on the configured Spring Boot port, typically on `http://localhost:8080`.
+
+---
+
+### Useful API Examples
+Create a sensor:
+```shell
+bash curl -X POST [http://localhost:8080/sensors](http://localhost:8080/sensors)
+-H "Content-Type: application/json"
+-d '{ "name": "temperature-sensor-1", "type": "TEMPERATURE" }'
+```
+
+Retrieve the latest alert for a sensor:
+```shell
+bash curl "[http://localhost:8080/alerts/latest?sensorId=](http://localhost:8080/alerts/latest?sensorId=)<sensor-id>"
+```
+
+---
+
+### Kafka
+
+Some optional tasks involve publishing messages to Kafka.
+
+Kafka is expected to be configured by the existing application setup. The implemented alert workflow publishes alert DTO messages to the `alerts` topic.
+
+---
+
+### Troubleshooting
+
+#### Docker/Testcontainers API Version Issue
+
+If Testcontainers fail because of a Docker API version mismatch, verify that Docker is running and that the Docker API version is compatible with the required Testcontainers setup.
+
+In my local environment, the issue was related to Docker API compatibility and was solved by adjusting the Docker configuration to support the required API version.
+
+#### Database Driver Error
+
+If the application fails with an error similar to: `"Failed to determine a suitable driver class"`, check that the correct Spring profile is active and that the PostgreSQL datasource configuration is available for that profile.
+
+#### Port Already in Use
+
+If port `8080` is already occupied, change the configured server port or stop the process currently using it.
+
+---
+
+## 🧰 Tech Stack
+
+- Java 26
+- Spring Boot
+- Spring MVC
+- Spring Data JPA
+- Jakarta Persistence API
+- PostgreSQL
+- Testcontainers
+- Kafka
+- JUnit 5
+
 ## 🧠 Thought Process
+
+The implementation was approached task by task, following the order of the provided assignment.
+
+The main goals were:
+
+- keep the service layer focused on business logic
+- keep persistence concerns in the entity/repository layer
+- rely on Spring MVC validation and exception handling for API-level behavior
+- use JPA constraints where data integrity must be guaranteed
+- keep the implementation minimal, testable, and aligned with the prepared integration tests
+
+Where possible, I preferred standard Spring Boot and JPA patterns over custom infrastructure.
 
 ### 🔧 Task #0: Use Testcontainers
 - Installed and configured docker for Windows. 
 - Updated WSL subsystem.
 - Provided project persistence using docker: `docker-compose up`
-- Still aFailing run tests, due to docker version incompatibility.
+- Still unable to run the test, due to docker version incompatibility.
 - Discovered that the application was looking for docker version `1.32`.
 - Extended docker `min-api-version` to `1.32`.
 - Successfully ran PoC test (`Task0Test`) to verify.
@@ -182,13 +287,25 @@ TODO
 ## 🔧 Interesting Generalisations
 ---
 
-## ✅ What Was Learned
+## 🔧 Possible Future Improvements
+
+- The actual implementation of `Deviation` also shows further possible generalizations:
+  - Define center other than the average value
+  - Make `Deviation` generic and access polimorfism
+- Generalize `Deviation` and `"MovingAverage"` under something like `MeasurementSeriesOperation` a `Function<List<Double>, List<Double>>` transformator function.
+- Resolve vulnerability issues on the dependency tree.
+- Add OpenAPI/Swagger documentation for the REST endpoints.
+- Improve API error responses by returning a consistent error response body.
+- Add more unit tests around service-layer validation and calculation logic.
+
 ---
 
 ## 📄 License
 
-This code is provided for portfolio purposes as part of a job interview process.  
-Feel free to use it as a reference.
+This repository was created as part of a coding assignment for an interview process.
+
+The code is provided for portfolio and reference purposes. Please do not reuse it as a direct submission for the same or similar assignment.
+
 ---
 
-*Submitted for ALDI interview – kyussfia - 2026*
+_Submitted for ALDI interview – kyussfia - 2026_

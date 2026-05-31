@@ -1,56 +1,54 @@
 package com.aldisued.iot.monitoring.service;
 
-
-import java.util.ArrayList;
-import java.util.List;
-
+import com.kyussfia.util.structure.Deviation;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.OptionalDouble;
 
 @Service
 public class MeasurementCalculatorService {
 
-  public record AverageDeviation(double value) {
-    public AverageDeviation {
-      if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
-        throw new IllegalArgumentException("AverageDeviation must be between 0.0 and 1.0");
-      }
-    }
+  @SuppressWarnings("MethodMayBeStatic")
+  public List<Double> filterByAverageDeviation(@NonNull List<Double> values, @NonNull Double deviation) {
+      final OptionalDouble optAvg = values.stream().mapToDouble(Double::doubleValue).average();
 
-    public double lowerBound(double average) {
-      return average - Math.abs(average) * this.value;
-    }
-
-    public double upperBound(double average) {
-      return average + Math.abs(average) * this.value;
-    }
-
-    public boolean isWithinBounds(double value, double average) {
-      return value >= this.lowerBound(average) && value <= this.upperBound(average);
-    }
+      final Deviation dev = new Deviation(deviation, optAvg.orElse(0.0));
+      return optAvg.isEmpty()
+                 ? Collections.emptyList()
+                 : values.stream().filter(dev::contains).toList();
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public List<Double> filterByAverageDeviation(@NonNull List<Double> values, @NonNull Double deviation) {
-    return filterByAverageDeviation(values, new AverageDeviation(deviation));
+  public List<Double> getMovingAverage(@NonNull List<Double> data, int windowSize) {
+    if (windowSize <= 0) {
+      throw new IllegalArgumentException("Window size must be positive");
+    }
+
+    if (windowSize > data.size()) {
+      throw new IllegalArgumentException("Window size must not exceed data size");
+    }
+
+    final List<Double> result = new ArrayList<>(data.size() - windowSize + 1);
+    final double inverseMultiplier = 1.0 / windowSize;
+
+    double slidingSum = 0.0;
+
+    for (int i = 0; i < data.size(); i++) {
+      slidingSum += data.get(i);
+
+      if (i >= windowSize) {
+        slidingSum -= data.get(i - windowSize);
+      }
+
+      if (i >= windowSize - 1) {
+        result.add(slidingSum * inverseMultiplier);
+      }
+    }
+
+    return result;
   }
-
-  public static List<Double> filterByAverageDeviation(@NonNull List<Double> values, @NonNull AverageDeviation deviation) {
-    final double average = values
-                         .stream()
-                         .mapToDouble(Double::doubleValue)
-                         .average()
-                         .orElseThrow();
-
-    return values
-               .stream()
-               .filter(v -> deviation.isWithinBounds(v, average))
-               .toList();
-  }
-
-  public List<Double> getMovingAverage(List<Double> data, int windowSize) {
-    // TODO: Task 10
-    return List.of();
-  }
-
 }
