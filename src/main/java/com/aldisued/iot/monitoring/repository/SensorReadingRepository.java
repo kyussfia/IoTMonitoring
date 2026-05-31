@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface SensorReadingRepository extends JpaRepository<SensorReading, String> {
+public interface SensorReadingRepository extends JpaRepository<SensorReading, Long> {
 
     @Query("""
         select avg(reading.value)

@@ -5,6 +5,7 @@ import com.aldisued.iot.monitoring.entity.SensorReading;
 import com.aldisued.iot.monitoring.repository.SensorReadingRepository;
 import com.aldisued.iot.monitoring.repository.SensorRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SensorReadingService {
@@ -17,9 +18,10 @@ public class SensorReadingService {
     this.sensorRepository = sensorRepository;
   }
 
+  @Transactional
   public SensorReading saveSensorReading(SensorReadingDto sensorReadingDto) {
      return this.sensorReadingRepository
-                .saveAndFlush(new SensorReading(
+                .save(new SensorReading(
                     sensorReadingDto.value(),
                     sensorReadingDto.timestamp(),
                     this.sensorRepository.findById(sensorReadingDto.sensorId()).orElseThrow()

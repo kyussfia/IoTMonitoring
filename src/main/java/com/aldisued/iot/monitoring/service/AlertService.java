@@ -7,6 +7,7 @@ import com.aldisued.iot.monitoring.repository.SensorRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -23,9 +24,10 @@ public class AlertService {
     this.kafkaTemplate = kafkaTemplate;
   }
 
+  @Transactional
   public Alert saveAlert(AlertDto alertDto) {
     Alert alert = this.alertRepository
-                      .saveAndFlush(new Alert(
+                      .save(new Alert(
                           alertDto.message(),
                           alertDto.timestamp(),
                           this.sensorRepository.findById(alertDto.sensorId()).orElseThrow()
